@@ -11,7 +11,7 @@
 #define SEED 0
 #define NB_LIGNES 5
 #define NB_COLONNES 5
-#define SPIN_DEF 0 //0 = ALEATOIRE
+#define SPIN_DEF 0 //0 = GRILLE ALEATOIRE, 1 = GRILLE UP, -1 = GRILLE DOWN
 #define NB_ITERATIONS 1000000
 
 #define J 1.0
@@ -28,6 +28,10 @@ int main(int argc, char* argv[]){
     } else {
         srand(SEED);
     }
+
+    //Initialisation des tableaux contenant les valeurs successives de l'énergie et l'aimantation
+    int tabE[NB_ITERATIONS];
+    int tabM[NB_ITERATIONS];
 
     //Initialisation de la grille
     int grille[NB_LIGNES][NB_COLONNES];
@@ -59,35 +63,52 @@ int main(int argc, char* argv[]){
         }
     }
 
+    //Initialisation de l'aimantation
+    int M = 0;
+    for (int i = 0; i < NB_LIGNES; i++) {
+        for (int j = 0; j < NB_COLONNES; j++) {
+            M += grille[i][j]
+        }
+    }
+
     for(int n = 0; n <= NB_ITERATIONS; n++){
 
         //Choix d'un spin à renverser
         int spin_ligne = randint(0, NB_LIGNES);
         int spin_colonne = randint(0, NB_COLONNES);
 
-        //Calcul de la différence d'énergie
+        //Calcul de l'énergie de la nouvelle configuration
         int nE = E;
         for(int k = 0; k < 4; k++){
             int iv = (spin_ligne + d[k][0]) % NB_LIGNES;
             int jv = (spin_colonne + d[k][1]) % NB_COLONNES;
-            E -= (-2*grille[spin_ligne][spin_colonne]) * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
+            nE -= (-2*grille[spin_ligne][spin_colonne]) * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
         }
+
+        //Calcul de l'aimantation de la nouvelle configuration
+        int nM = M - 2*grille[spin_ligne][spin_colonne] //il faut soustraire en plus l'état d'aimantation actuel de la case 
 
         int DE = nE - E;
         if(DE < 0){
             //Renversement du spin
             grille[spin_ligne][spin_colonne] -= grille[spin_ligne][spin_colonne];
             E = nE;
+            M = nM;
         } else {
             int x = rand01();
             if(x < exp((double) (DE / (kB * T)))){
                 //On accepte la nouvelle configuration
                 grille[spin_ligne][spin_colonne] -= grille[spin_ligne][spin_colonne];
                 E = nE;
+                M = nM;
             } else {
                 //On rejette la nouvelle configuration (rien à faire)
             }
         }
+
+        //On stocke les nouvelles valeurs de l'énergie et de l'aimantation
+        tabE[n] = E;
+        tabM[n] = M;
     }
 
     return 0;
