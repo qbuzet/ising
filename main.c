@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <string.h>
 
 /*
  * Attention, on se place dans les conditions BVK dans la suite du programme
@@ -18,10 +19,14 @@
 #define kB 1.0
 #define T 1.0
 
+#define FILENAME "./out.txt"
+
 int randint(int a, int b);
 double rand01();
 
 int main(int argc, char* argv[]){
+    printf("début");
+
     //Initialisation du générateur de nombre aléatoire
     if(SEED == 0){
         srand(time(NULL));
@@ -67,7 +72,7 @@ int main(int argc, char* argv[]){
     int M = 0;
     for (int i = 0; i < NB_LIGNES; i++) {
         for (int j = 0; j < NB_COLONNES; j++) {
-            M += grille[i][j]
+            M += grille[i][j];
         }
     }
 
@@ -86,19 +91,19 @@ int main(int argc, char* argv[]){
         }
 
         //Calcul de l'aimantation de la nouvelle configuration
-        int nM = M - 2*grille[spin_ligne][spin_colonne] //il faut soustraire en plus l'état d'aimantation actuel de la case 
+        int nM = M - 2*grille[spin_ligne][spin_colonne]; //il faut soustraire en plus l'état d'aimantation actuel de la case 
 
         int DE = nE - E;
         if(DE < 0){
             //Renversement du spin
-            grille[spin_ligne][spin_colonne] -= grille[spin_ligne][spin_colonne];
+            grille[spin_ligne][spin_colonne] = -grille[spin_ligne][spin_colonne];
             E = nE;
             M = nM;
         } else {
             int x = rand01();
             if(x < exp((double) (DE / (kB * T)))){
                 //On accepte la nouvelle configuration
-                grille[spin_ligne][spin_colonne] -= grille[spin_ligne][spin_colonne];
+                grille[spin_ligne][spin_colonne] = -grille[spin_ligne][spin_colonne];
                 E = nE;
                 M = nM;
             } else {
@@ -110,6 +115,19 @@ int main(int argc, char* argv[]){
         tabE[n] = E;
         tabM[n] = M;
     }
+
+    //Ecriture des résultats dans le fichier de sortie
+    FILE* file = fopen(FILENAME, "w+");
+    if (!file) {
+        printf("Impossible d'ouvrir le fichier");
+    }
+
+    for (int n = 0; n < NB_ITERATIONS; n++) {
+        printf("%d %d %d \n", n, tabE[n], tabM[n]);
+        fprintf(file, "%d %d %d \n", n, tabE[n], tabM[n]);
+    }
+
+    fclose(file);
 
     return 0;
 }
