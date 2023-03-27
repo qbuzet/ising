@@ -13,7 +13,7 @@
 #define NB_LIGNES 5
 #define NB_COLONNES 5
 #define SPIN_DEF 0 //0 = GRILLE ALEATOIRE, 1 = GRILLE UP, -1 = GRILLE DOWN
-#define NB_ITERATIONS 1000000
+#define NB_ITERATIONS 100
 
 #define J 1.0
 #define kB 1.0
@@ -25,8 +25,6 @@ int randint(int a, int b);
 double rand01();
 
 int main(int argc, char* argv[]){
-    printf("début");
-
     //Initialisation du générateur de nombre aléatoire
     if(SEED == 0){
         srand(time(NULL));
@@ -35,8 +33,8 @@ int main(int argc, char* argv[]){
     }
 
     //Initialisation des tableaux contenant les valeurs successives de l'énergie et l'aimantation
-    int tabE[NB_ITERATIONS];
-    int tabM[NB_ITERATIONS];
+    int tabE[NB_ITERATIONS+1];
+    int tabM[NB_ITERATIONS+1];
 
     //Initialisation de la grille
     int grille[NB_LIGNES][NB_COLONNES];
@@ -50,6 +48,14 @@ int main(int argc, char* argv[]){
                 grille[i][j] = SPIN_DEF;
             }
         }
+    }
+
+    //Affichage de la grille
+    for(int i = 0; i < NB_LIGNES; i++){
+        for(int j = 0; j < NB_COLONNES; j++){
+            printf("%d ", grille[i][j]);
+        }
+        printf("\n");
     }
 
     //Cases adjacentes
@@ -76,11 +82,11 @@ int main(int argc, char* argv[]){
         }
     }
 
-    for(int n = 0; n <= NB_ITERATIONS; n++){
+    for(int n = 1; n <= NB_ITERATIONS; n++){
 
         //Choix d'un spin à renverser
-        int spin_ligne = randint(0, NB_LIGNES);
-        int spin_colonne = randint(0, NB_COLONNES);
+        int spin_ligne = randint(0, NB_LIGNES-1); //Exclu ici
+        int spin_colonne = randint(0, NB_COLONNES-1); //Exclu ici
 
         //Calcul de l'énergie de la nouvelle configuration
         int nE = E;
@@ -122,8 +128,8 @@ int main(int argc, char* argv[]){
         printf("Impossible d'ouvrir le fichier");
     }
 
+    fprintf(file, "#n E M \n");
     for (int n = 0; n < NB_ITERATIONS; n++) {
-        printf("%d %d %d \n", n, tabE[n], tabM[n]);
         fprintf(file, "%d %d %d \n", n, tabE[n], tabM[n]);
     }
 
