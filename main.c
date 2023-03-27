@@ -17,7 +17,7 @@
 
 #define J 1.0
 #define kB 1.0
-#define T 1.0
+#define T 10.0
 
 #define FILENAME "./out.txt"
 
@@ -82,11 +82,16 @@ int main(int argc, char* argv[]){
         }
     }
 
+    //On stocke les valeurs initiales
+    tabE[0] = E;
+    tabM[0] = M;
+
     for(int n = 1; n <= NB_ITERATIONS; n++){
 
         //Choix d'un spin à renverser
         int spin_ligne = randint(0, NB_LIGNES-1); //Exclu ici
         int spin_colonne = randint(0, NB_COLONNES-1); //Exclu ici
+        printf("Spin à renverser : %d %d\n", spin_ligne, spin_colonne);
 
         //Calcul de l'énergie de la nouvelle configuration
         int nE = E;
@@ -129,7 +134,7 @@ int main(int argc, char* argv[]){
     }
 
     fprintf(file, "#n E M \n");
-    for (int n = 0; n < NB_ITERATIONS; n++) {
+    for (int n = 0; n <= NB_ITERATIONS; n++) {
         fprintf(file, "%d %d %d \n", n, tabE[n], tabM[n]);
     }
 
