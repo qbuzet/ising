@@ -10,16 +10,16 @@
 
 //Constante de la simulation
 #define SEED 0
-#define NB_LIGNES 5
-#define NB_COLONNES 5
+#define NB_LIGNES 25
+#define NB_COLONNES 25
 #define SPIN_DEF 0 //0 = GRILLE ALEATOIRE, 1 = GRILLE UP, -1 = GRILLE DOWN
-#define NB_ITERATIONS 1000
+#define NB_ITERATIONS 1000000
 
 #define J 1.0
 #define kB 1.0
 
 #define T_MIN 1.0
-#define T_MAX 5.0
+#define T_MAX 10.0
 #define NB_TEMPERATURES 100
 
 #define FILENAME "./out.txt"
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
         }*/
 
         //Initialisation des tableaux contenant les valeurs successives de l'énergie et l'aimantation
-        int tabE[NB_ITERATIONS+1];
+        double tabE[NB_ITERATIONS+1];
         int tabM[NB_ITERATIONS+1];
 
         double EMoy = 0;
@@ -75,14 +75,14 @@ int main(int argc, char* argv[]){
         int d[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
 
         //Initialisation de l'énergie
-        int E = 0;
+        double E = 0;
         for(int i = 0; i < NB_LIGNES; i++){
             for(int j = 0; j < NB_COLONNES; j++){
                 
                 for(int k = 0; k < 4; k++){
                     int iv = (i + d[k][0]) % NB_LIGNES;
                     int jv = (j + d[k][1]) % NB_COLONNES;
-                    E -= grille[i][j] * grille[iv][jv];
+                    E -= J * grille[i][j] * grille[iv][jv];
                 }
             }
         }
@@ -107,11 +107,11 @@ int main(int argc, char* argv[]){
             //printf("Spin à renverser : %d %d\n", spin_ligne, spin_colonne);
 
             //Calcul de l'énergie de la nouvelle configuration
-            int nE = E;
+            double nE = E;
             for(int k = 0; k < 4; k++){
                 int iv = (spin_ligne + d[k][0]) % NB_LIGNES;
                 int jv = (spin_colonne + d[k][1]) % NB_COLONNES;
-                nE -= (-2*grille[spin_ligne][spin_colonne]) * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
+                nE -= (double) J * (-2*grille[spin_ligne][spin_colonne]) * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
             }
 
             //Calcul de l'aimantation de la nouvelle configuration
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]){
 
             //On stocke les nouvelles valeurs de l'énergie et de l'aimantation
             tabE[n] = E;
-            tabM[n] = M;
+            tabM[n] = abs(M);
         }
 
         //Calcul de l'énergie et de l'aimantation moyenne
