@@ -13,14 +13,14 @@
 #define NB_LIGNES 10
 #define NB_COLONNES 10
 #define SPIN_DEF 1 //0 = GRILLE ALEATOIRE, 1 = GRILLE UP, -1 = GRILLE DOWN
-#define NB_ITERATIONS 10000
+#define NB_ITERATIONS 100000
 
 #define J 1.0
 #define kB 1.0
 
-#define T_MIN 1.0
-#define T_MAX 10.0
-#define NB_TEMPERATURES 10
+#define T_MIN 0.1
+#define T_MAX 5 
+#define NB_TEMPERATURES 100
 
 #define FILENAME "./out.txt"
 
@@ -74,10 +74,6 @@ int test_bord(int argc, char* argv[]){
     return 0;
 }
 
-int test_energie(int argc, char* argv[]){
-    return 0;
-}
-
 int main(int argc, char* argv[]){
     //Initialisation du générateur de nombre aléatoire
     if(SEED == 0){
@@ -117,7 +113,7 @@ int main(int argc, char* argv[]){
 
         //Initialisation des tableaux contenant les valeurs successives de l'énergie et l'aimantation
         double tabE[NB_ITERATIONS+1];
-        int tabM[NB_ITERATIONS+1];
+        double tabM[NB_ITERATIONS+1];
 
         double EMoy = 0;
         double MMoy = 0;
@@ -143,7 +139,7 @@ int main(int argc, char* argv[]){
         }
 
         //Initialisation de l'aimantation
-        int M = 0;
+        double M = 0;
         for (int i = 0; i < NB_LIGNES; i++) {
             for (int j = 0; j < NB_COLONNES; j++) {
                 M += grille[i][j];
@@ -166,6 +162,11 @@ int main(int argc, char* argv[]){
             for(int k = 0; k < 4; k++){
                 int iv = (spin_ligne + d[k][0]) % NB_LIGNES;
                 int jv = (spin_colonne + d[k][1]) % NB_COLONNES;
+
+                if(iv < 0) iv += NB_LIGNES;
+                if(jv < 0) jv += NB_COLONNES;
+
+                //printf("%d %d ", grille[spin_ligne][spin_colonne], grille[iv][jv]);
                 nE -= (double) -2 * J * grille[spin_ligne][spin_colonne] * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
             }
 
@@ -179,8 +180,9 @@ int main(int argc, char* argv[]){
                 E = nE;
                 M = nM;
             } else {
-                int x = rand01();
-                if(x < exp((-1.0) * (double) (DE / (kB * T)))){
+                double x = rand01();
+                double seuil = exp(- DE / (kB * T));
+                if(x < seuil){
                     //On accepte la nouvelle configuration
                     grille[spin_ligne][spin_colonne] = -grille[spin_ligne][spin_colonne];
                     E = nE;
