@@ -1,0 +1,6 @@
+set terminal png; 
+set output 'M(T).png';
+set yrange [-0.05:1.05];
+set xlabel "Temperature T"
+set ylabel "Aimentation M/Max"
+plot "out.txt" using 1:(abs($3)) title "Simulation Metropolis-Hastings", x<2.269 ? (1-sinh((2/x))**(-4.))**(1./8) : 0 title "Solution de Yang";

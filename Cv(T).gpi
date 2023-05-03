@@ -1,0 +1,5 @@
+set terminal png; 
+set output 'Cv(T).png';
+set xlabel "Temperature T"
+set ylabel "Chaleur spécifique Cv/Cv max "
+plot "out.txt" using 1:4 title "Simulation Metropolis-Hastings"; 

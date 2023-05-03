@@ -22,7 +22,7 @@
 #define T_MAX 5 
 #define NB_TEMPERATURES 100
 
-#define FILENAME "./out.txt"
+#define FILENAME "out.txt"
 
 int randint(int a, int b);
 double rand01();
@@ -85,6 +85,8 @@ int main(int argc, char* argv[]){
     //Initialisation des tableaux contenant les valeurs successives de l'énergie moyenne et l'aimantation moyenne à T fixé
     double tabEMoy[NB_TEMPERATURES];
     double tabMMoy[NB_TEMPERATURES];
+    double tabCvMoy[NB_TEMPERATURES];
+    double tabChiMoy[NB_TEMPERATURES];
 
     for(int t=0; t < NB_TEMPERATURES; t++){
         double T = T_MIN + t * (T_MAX - T_MIN) / NB_TEMPERATURES;
@@ -116,7 +118,9 @@ int main(int argc, char* argv[]){
         double tabM[NB_ITERATIONS+1];
 
         double EMoy = 0;
+        double E2Moy = 0;
         double MMoy = 0;
+        double M2Moy = 0;
 
         //Cases adjacentes
         int d[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
@@ -200,26 +204,52 @@ int main(int argc, char* argv[]){
         //Calcul de l'énergie et de l'aimantation moyenne
         for (int n = 0; n < NB_ITERATIONS + 1; n++) {
             EMoy += (double) tabE[n];
+            E2Moy += (double) tabE[n] * tabE[n];
             MMoy += (double) tabM[n];
+            M2Moy += (double) tabM[n] * tabM[n];
+
         }
-        EMoy /= (double)(NB_ITERATIONS + 1);
-        MMoy /= (double)(NB_ITERATIONS + 1);
+        EMoy /= (double) (NB_ITERATIONS + 1);
+        E2Moy /= (double) (NB_ITERATIONS + 1);
+        MMoy /= (double) (NB_ITERATIONS + 1);
+        M2Moy /= (double) (NB_ITERATIONS + 1);
+
+        //Normalisation
+        EMoy /= 4 * NB_LIGNES * NB_COLONNES;
+        E2Moy /= (4 * NB_LIGNES * NB_COLONNES) * (4 * NB_LIGNES * NB_COLONNES);
+        MMoy /= NB_LIGNES * NB_COLONNES;
+        M2Moy /= (NB_LIGNES * NB_COLONNES) * (NB_LIGNES * NB_COLONNES);
 
         tabEMoy[t] = EMoy;
         tabMMoy[t] = MMoy;
+        tabCvMoy[t] = (E2Moy - EMoy * EMoy) / ((kB * T) * (kB * T));
+        tabChiMoy[t] = (M2Moy - MMoy * MMoy) / (kB * T);
+
 
         //Ecriture de l'echantillonnage de l'énergie et de l'aimantation moyenne dans le fichier de sortie
-        /*FILE* file = fopen(FILENAME, "w+");
-        if (!file) {
+        char name_E[10];
+        char name_M[10];
+        sprintf(name_E, "E_%0.2f", T);
+        sprintf(name_M, "M_%0.2f", T);
+        
+        FILE* file_E = fopen(name_E, "w+");
+        FILE* file_M = fopen(name_M, "w+");
+        if (!file_E) {
+            printf("Impossible d'ouvrir le fichier");
+        }
+        if (!file_M) {
             printf("Impossible d'ouvrir le fichier");
         }
 
-        fprintf(file, "#n E M \n");
+        fprintf(file_E, "#n E\n");
+        fprintf(file_M, "#n M\n");
         for (int n = 0; n <= NB_ITERATIONS; n++) {
-            fprintf(file, "%d %f %d \n", n, tabE[n], tabM[n]);
+            fprintf(file_E, "%d %f\n", n, tabE[n]);
+            fprintf(file_M, "%d %f\n", n, tabM[n]);
         }
 
-        fclose(file);*/
+        fclose(file_E);
+        fclose(file_M);
     }
 
     //Ecriture des résultats dans le fichier de sortie
@@ -228,10 +258,10 @@ int main(int argc, char* argv[]){
         printf("Impossible d'ouvrir le fichier");
     }
 
-    fprintf(file, "#T EMoy MMoy \n");
+    fprintf(file, "#T EMoy MMoy CvMoy ChiMoy\n");
     for(int t=0; t < NB_TEMPERATURES; t++){
         double T = T_MIN + t * (T_MAX - T_MIN) / NB_TEMPERATURES;
-        fprintf(file, "%f %f %f \n", T, tabEMoy[t], tabMMoy[t]);
+        fprintf(file, "%f %f %f %f %f\n", T, tabEMoy[t], tabMMoy[t], tabCvMoy[t], tabChiMoy[t]);
     }
 
     fclose(file);

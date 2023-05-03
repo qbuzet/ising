@@ -1,0 +1,5 @@
+set terminal png; 
+set output 'Chi(T).png';
+set xlabel "Temperature T"
+set ylabel "Susceptibilité magnétique Chi/Chi max"
+plot "out.txt" using 1:5 title "Simulation Metropolis-Hastings"; 
