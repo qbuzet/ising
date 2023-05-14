@@ -1,7 +1,7 @@
 O_FILES = main.o
 PROG = app
 OUT = M E
-OUT_FILES = out.txt
+OUT_FILES = out.txt out_B.txt
 
 run: app
 	./app
@@ -25,3 +25,6 @@ figures:
 
 tcri:
 	gnuplot 'Tcri.gpi';
+
+mb:
+	gnuplot 'M(B).gpi'

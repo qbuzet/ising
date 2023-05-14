@@ -1,0 +1,5 @@
+set terminal png; 
+set output 'M(B).png';
+set xlabel "Champ magnétique extérieur B"
+set ylabel "Aimantation M"
+plot "out_B.txt" using 1:3 title "Simulation Metropolis-Hastings";

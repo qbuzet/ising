@@ -18,9 +18,11 @@
  * 0 Echantillonnage à T constant
  * 1 Etude en température
  * 2 Etude en taille
+ * 3 Etude en champ magnétique
  **/
-#define MODE 1
+#define MODE 3
 #define FILENAME_OUT_T "out.txt"
+#define FILENAME_OUT_B "out_B.txt"
 #define FILENAME_TEST "test.txt"
 
 typedef struct EM
@@ -55,9 +57,9 @@ void detruire_grille(int NB_LIGNES, int NB_COLONNES, int** grille);
  * 0 Pas de fichier de sortie avec l'échantillonnage
  * 1 Création d'un fichier de sortie contenant l'échantillonnage
  **/
-EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATIONS, double T, int OUT_ECH);
+EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATIONS, double T, double B, int OUT_ECH);
 
-//Par défaut OUT_ECH = 0
+//Par défaut B = 0, OUT_ECH = 0
 Tcri simuler_T(int NB_LIGNES, int NB_COLONNES, int NB_ITERATIONS, double T_MIN, double T_MAX, int NB_TEMPERATURES, int SPIN_DEF);
 
 int test_alea(int argc, char* argv[]){
@@ -117,7 +119,6 @@ int main(int argc, char* argv[]){
         srand(SEED);
     }
 
-
     if(MODE == 0){
 
         int NB_LIGNES = 10;
@@ -126,11 +127,12 @@ int main(int argc, char* argv[]){
         int NB_ITERATIONS = 100000;
 
         double T = 1.0;
+        double B = 0.0;
 
         int OUT_ECH = 1;
 
-        int** grille = init_grille(NB_LIGNES,NB_COLONNES, SPIN_DEF);
-        echantillonner(NB_LIGNES,NB_COLONNES,grille,NB_ITERATIONS,T,OUT_ECH);
+        int** grille = init_grille(NB_LIGNES, NB_COLONNES, SPIN_DEF);
+        echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, OUT_ECH);
 
     } else if(MODE == 1){
 
@@ -167,6 +169,54 @@ int main(int argc, char* argv[]){
         for(int i = 0; i < 9; i++){
             fprintf(file, "%d %d %d %f %f\n", lignes[i], lignes[i], lignes[i]*lignes[i]*1000, tabTcri[i].TcriCv, tabTcri[i].TcriCv);
         }
+        fclose(file);
+
+    } else if(MODE == 3) {
+
+        int NB_LIGNES = 10;
+        int NB_COLONNES = 10;
+        int SPIN_DEF = 1;
+        int NB_ITERATIONS = 100000;
+
+        double B_MIN = -1.0;
+        double B_MAX = 1.0;
+        int NB_B = 100;
+        int NB_CYCLES = 1;
+
+        double T = 1.0;
+
+        FILE* file = fopen(FILENAME_OUT_B, "w+");
+        if (!file) {
+            printf("Impossible d'ouvrir le fichier");
+        }
+        fprintf(file, "#B EMoy MMoy CvMoy ChiMoy\n");
+
+        int** grille = init_grille(NB_LIGNES, NB_COLONNES, SPIN_DEF);
+
+        //Première aimantation
+        for(int b=0; b < NB_B; b++){
+            double B = 0 + b * (B_MAX - 0) / (NB_B - 1);
+            printf("Itération : B = %f\n", B);
+            EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, 0);
+            fprintf(file, "%f %f %f %f %f\n", B, em.EMoy, em.MMoy, em.CvMoy, em.ChiMoy);
+        }
+
+        //Hystérésis
+        for(int i = 0; i < NB_CYCLES; i++){
+            for(int b=NB_B - 1; b >= 0; b--){
+                double B = B_MIN + b * (B_MAX - B_MIN) / (NB_B - 1);
+                printf("Itération : B = %f\n", B);
+                EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, 0);
+                fprintf(file, "%f %f %f %f %f\n", B, em.EMoy, em.MMoy, em.CvMoy, em.ChiMoy);
+            }
+            for(int b=0; b < NB_B; b++){
+                double B = B_MIN + b * (B_MAX - B_MIN) / (NB_B - 1);
+                printf("Itération : B = %f\n", B);
+                EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, 0);
+                fprintf(file, "%f %f %f %f %f\n", B, em.EMoy, em.MMoy, em.CvMoy, em.ChiMoy);
+            }
+        }
+
         fclose(file);
 
     } else {
@@ -219,7 +269,7 @@ void detruire_grille(int NB_LIGNES, int NB_COLONNES, int** grille){
     free(grille);
 }
 
-EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATIONS, double T, int OUT_ECH){
+EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATIONS, double T, double B, int OUT_ECH){
      //Initialisation des tableaux contenant les valeurs successives de l'énergie et l'aimantation
     double* tabE = (double*) malloc((NB_ITERATIONS + 1) * sizeof(double));
     double* tabM = (double*) malloc((NB_ITERATIONS + 1) * sizeof(double));
@@ -239,8 +289,9 @@ EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATION
                 if(iv < 0) iv += NB_LIGNES;
                 if(jv < 0) jv += NB_COLONNES;
 
-                E -= J * grille[i][j] * grille[iv][jv];
+                E -= J * grille[i][j] * grille[iv][jv] / 4;
             }
+            E -= B * grille[i][j];
         }
     }
 
@@ -273,8 +324,9 @@ EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATION
             if(jv < 0) jv += NB_COLONNES;
 
             //printf("%d %d ", grille[spin_ligne][spin_colonne], grille[iv][jv]);
-            nE -= (double) -2 * J * grille[spin_ligne][spin_colonne] * grille[iv][jv]; //2* car il faut ajouter également l'énergie déjà présente
+            nE -= (double) -2 * J * grille[spin_ligne][spin_colonne] * grille[iv][jv] / 4; //2* car il faut ajouter également l'énergie déjà présente
         }
+        nE -= -2 * B * grille[spin_ligne][spin_colonne];
 
         //Calcul de l'aimantation de la nouvelle configuration
         int nM = M - 2 * grille[spin_ligne][spin_colonne]; //il faut soustraire en plus l'état d'aimantation actuel de la case 
@@ -348,10 +400,11 @@ EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATION
     M2Moy /= (double) (NB_ITERATIONS + 1);
 
     //Normalisation
-    EMoy /= 4 * NB_LIGNES * NB_COLONNES;
-    E2Moy /= (4 * NB_LIGNES * NB_COLONNES) * (4 * NB_LIGNES * NB_COLONNES);
-    MMoy /= NB_LIGNES * NB_COLONNES;
-    M2Moy /= (NB_LIGNES * NB_COLONNES) * (NB_LIGNES * NB_COLONNES);
+    int NB_SPINS = NB_LIGNES * NB_COLONNES;
+    EMoy /= NB_SPINS;
+    E2Moy /= NB_SPINS * NB_SPINS;
+    MMoy /= NB_SPINS;
+    M2Moy /= NB_SPINS * NB_SPINS;
 
     double CvMoy = (E2Moy - EMoy * EMoy) / ((kB * T) * (kB * T));
     double ChiMoy = (M2Moy - MMoy * MMoy) / (kB * T);
@@ -370,6 +423,7 @@ EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATION
 }
 
 Tcri simuler_T(int NB_LIGNES, int NB_COLONNES, int NB_ITERATIONS, double T_MIN, double T_MAX, int NB_TEMPERATURES, int SPIN_DEF){
+    double B = 0.0;
     int OUT_ECH = 0;
 
     //Initialisation des tableaux contenant les valeurs successives de l'énergie moyenne et l'aimantation moyenne à T fixé
@@ -385,7 +439,7 @@ Tcri simuler_T(int NB_LIGNES, int NB_COLONNES, int NB_ITERATIONS, double T_MIN, 
         //Initialisation de la grille
         int** grille = init_grille(NB_LIGNES,NB_COLONNES,SPIN_DEF);
 
-        EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, OUT_ECH);
+        EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, OUT_ECH);
         tabEMoy[t] = em.EMoy;
         tabMMoy[t] = em.MMoy;
         tabCvMoy[t] = em.CvMoy;
