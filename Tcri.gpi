@@ -1,0 +1,5 @@
+set terminal png; 
+set output 'Tcri.png';
+set xlabel "Nombre de spins d'un côté"
+set ylabel "Température critique"
+plot "Tcri.txt" using 1:4 title "Cv", "Tcri.txt" using 1:5 title "Chi";
