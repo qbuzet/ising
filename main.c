@@ -20,7 +20,8 @@
  * 2 Etude en taille
  * 3 Etude en champ magnétique
  **/
-#define MODE 3
+#define MODE 1
+
 #define FILENAME_OUT_T "out.txt"
 #define FILENAME_OUT_B "out_B.txt"
 #define FILENAME_TEST "test.txt"
@@ -158,7 +159,7 @@ int main(int argc, char* argv[]){
         Tcri* tabTcri = (Tcri*) malloc(9 * sizeof(Tcri));
 
         for (int i = 0; i < 9; i++){
-            tabTcri[i] = simuler_T(lignes[i], lignes[i], lignes[i]*lignes[i]*1000, T_MIN, T_MAX, NB_TEMPERATURES, SPIN_DEF);
+            tabTcri[i] = simuler_T(lignes[i], lignes[i], 100000, T_MIN, T_MAX, NB_TEMPERATURES, SPIN_DEF);
         }
 
         FILE* file = fopen("Tcri.txt", "w+");
@@ -167,19 +168,19 @@ int main(int argc, char* argv[]){
         }
         fprintf(file, "#nbLignes nbColonnes nbIterations TcriCv TcriChi\n");
         for(int i = 0; i < 9; i++){
-            fprintf(file, "%d %d %d %f %f\n", lignes[i], lignes[i], lignes[i]*lignes[i]*1000, tabTcri[i].TcriCv, tabTcri[i].TcriCv);
+            fprintf(file, "%d %d %d %f %f\n", lignes[i], lignes[i], 100000, tabTcri[i].TcriCv, tabTcri[i].TcriCv);
         }
         fclose(file);
 
     } else if(MODE == 3) {
 
-        int NB_LIGNES = 10;
-        int NB_COLONNES = 10;
-        int SPIN_DEF = 1;
+        int NB_LIGNES = 100;
+        int NB_COLONNES = 100;
+        int SPIN_DEF = 0;
         int NB_ITERATIONS = 100000;
 
-        double B_MIN = -1.0;
-        double B_MAX = 1.0;
+        double B_MIN = -0.5;
+        double B_MAX = 0.5;
         int NB_B = 100;
         int NB_CYCLES = 1;
 
@@ -195,7 +196,7 @@ int main(int argc, char* argv[]){
 
         //Première aimantation
         for(int b=0; b < NB_B; b++){
-            double B = 0 + b * (B_MAX - 0) / (NB_B - 1);
+            double B = 0.1 + b * (B_MAX - 0.1) / (NB_B - 1);
             printf("Itération : B = %f\n", B);
             EM em = echantillonner(NB_LIGNES, NB_COLONNES, grille, NB_ITERATIONS, T, B, 0);
             fprintf(file, "%f %f %f %f %f\n", B, em.EMoy, em.MMoy, em.CvMoy, em.ChiMoy);
@@ -423,7 +424,7 @@ EM echantillonner(int NB_LIGNES, int NB_COLONNES, int** grille, int NB_ITERATION
 }
 
 Tcri simuler_T(int NB_LIGNES, int NB_COLONNES, int NB_ITERATIONS, double T_MIN, double T_MAX, int NB_TEMPERATURES, int SPIN_DEF){
-    double B = 0.0;
+    double B = 0;
     int OUT_ECH = 0;
 
     //Initialisation des tableaux contenant les valeurs successives de l'énergie moyenne et l'aimantation moyenne à T fixé
